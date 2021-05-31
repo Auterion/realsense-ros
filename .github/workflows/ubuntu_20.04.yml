@@ -1,0 +1,68 @@
+name: Ubuntu 20.04 build
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build_and_test:
+    name: "ROS 2 ${{ matrix.ros2_distro }}"
+    runs-on: ubuntu-20.04
+    container: px4io/px4-dev-ros2-${{ matrix.ros2_distro }}:2021-05-27
+    strategy:
+      matrix:
+        ros2_distro: [foxy, galactic, rolling]
+    steps:
+      - uses: actions/checkout@v1
+      - name: disable the keychain credential helper
+        run: git config --global credential.helper ""
+      - name: enable the local store credential helper
+        run: git config --global --add credential.helper store
+      - name: add credential
+        run: echo "https://x-access-token:${{ secrets.ACCESS_TOKEN }}@github.com" >> ~/.git-credentials
+      - name: tell git to use https instead of ssh whenever it encounters it
+        run: 'git config --global url."https://github.com/".insteadof git@github.com:'
+      - name: get submodules
+        run: 'git submodule update --init --recursive'
+      - name: Prepare ccache timestamp
+        id: ccache_cache_timestamp
+        shell: cmake -P {0}
+        run: |
+          string(TIMESTAMP current_date "%Y-%m-%d-%H;%M;%S" UTC)
+          message("::set-output name=timestamp::${current_date}")
+      - uses: actions/cache@v1.1.0
+        id: ccache-persistence
+        with:
+          path: ~/.ccache
+          key: ${{ matrix.config.name }}-ccache-semiglobal-planner-ros2-${{steps.ccache_cache_timestamp.outputs.timestamp}}
+          restore-keys: |
+            ${{ matrix.config.name }}-ccache-semiglobal-planner-ros2-
+      - name: setup ccache
+        run: mkdir -p ~/.ccache && echo "max_size = 300M" > ~/.ccache/ccache.conf && ccache -z && ccache -s
+      - name: Configure workspace
+        run: |
+          mkdir -p /tmp/colcon_ws/src
+          cd /tmp/colcon_ws
+          ln -s ${GITHUB_WORKSPACE} src/realsense-ros
+      - name: install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y curl gnupg2 lsb-release
+          sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key  -o /usr/share/keyrings/ros-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+          sudo apt update
+          rosdep update
+          sudo rosdep install --from-paths /tmp/colcon_ws/src --ignore-src -r -y
+      - name: Build package
+        working-directory: /tmp/colcon_ws
+        run: |
+          source /opt/ros/${{ matrix.ros2_distro }}/setup.bash
+          colcon build --event-handlers console_direct+

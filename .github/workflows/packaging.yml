@@ -1,0 +1,74 @@
+name: Build/deb packaging
+
+on:
+  push:
+    branches:
+      - '*'
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  packaging:
+    name: "ROS 2 ${{ matrix.ros2_distro }} - ${{ matrix.arch }}"
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        ros2_distro: [foxy, galactic]
+        arch: [x86_64, aarch64]
+    steps:
+      - uses: actions/checkout@v1
+      - name: disable the keychain credential helper
+        run: git config --global credential.helper ""
+      - name: enable the local store credential helper
+        run: git config --global --add credential.helper store
+      - name: add credential
+        run: echo "https://x-access-token:${{ secrets.ACCESS_TOKEN }}@github.com" >> ~/.git-credentials
+      - name: tell git to use https instead of ssh whenever it encounters it
+        run: 'git config --global url."https://github.com/".insteadof git@github.com:'
+      - name: get submodules
+        run: 'git submodule update --init --recursive'
+      - name: Process Github reference
+        id: refs
+        run: |
+          git fetch --all --tags
+          echo "::set-output name=tag_version::$(git describe --abbrev=0 --tags)"
+          echo "::set-output name=package_arch::$(bash -c "if [ \"${{ matrix.arch }}\" = \"x86_64\" ]; then echo amd64; elif [ \"${{ matrix.arch }}\" = \"aarch64\" ]; then echo arm64; fi")"
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+          echo "::set-output name=branch::$(echo ${GITHUB_REF#refs/heads/})"
+          echo "::set-output name=date::$(date +'%Y-%m-%d')"
+      - name: Install dependencies
+        run: |
+          sudo apt update && sudo apt install -y --no-install-recommends \
+            git \
+            python3-pip \
+            qemu-user-static
+          sudo pip3 install ros_cross_compile>=0.7.0
+      - name: Configure workspace
+        run: |
+          unset ROS_DISTRO
+          mkdir -p /tmp/colcon_ws/src
+          cp -ar ${GITHUB_WORKSPACE} /tmp/colcon_ws/src/realsense-ros/
+      - name: Build & Packaging
+        run: |
+          # Run cross-compilation
+          ros_cross_compile /tmp/colcon_ws \
+            --arch ${{ matrix.arch }} \
+            --os ubuntu \
+            --rosdistro ${{ matrix.ros2_distro }}
+      - name: Create zip
+        run: |
+          cd /tmp/colcon_ws/install_${{ matrix.arch }}
+          zip -r realsense-ros_${{ matrix.ros2_distro }}_v${{ steps.refs.outputs.tag_version }}_${{ steps.refs.outputs.package_arch }}.zip .
+      - name: Publish artefacts
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: svenstaro/upload-release-action@2.2.1
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: /tmp/colcon_ws/install_${{ matrix.arch }}/realsense-ros_${{ matrix.ros2_distro }}_v${{ steps.refs.outputs.tag_version }}_${{ steps.refs.outputs.package_arch }}.zip
+          release_name: v${{ steps.refs.outputs.tag_version }}
+          asset_name: realsense-ros_${{ matrix.ros2_distro }}_v${{ steps.refs.outputs.tag_version }}_${{ steps.refs.outputs.package_arch }}.zip
+          tag: v${{ steps.refs.outputs.tag_version }}
+          overwrite: true
