@@ -16,10 +16,10 @@ jobs:
   build_and_test:
     name: "ROS 2 ${{ matrix.ros2_distro }}"
     runs-on: ubuntu-18.04
-    container: px4io/px4-dev-ros2-${{ matrix.ros2_distro }}:2021-05-27
+    container: px4io/px4-dev-ros2-${{ matrix.ros2_distro }}:2021-05-31
     strategy:
       matrix:
-        ros2_distro: [dashing, eloquent]
+        ros2_distro: [dashing]
     steps:
       - uses: actions/checkout@v1
       - name: disable the keychain credential helper
@@ -55,12 +55,20 @@ jobs:
       - name: install dependencies
         run: |
           sudo apt update
-          sudo apt install -y curl gnupg2 lsb-release
+          sudo apt install -y ca-certificates curl gnupg2 lsb-release software-properties-common
           sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key  -o /usr/share/keyrings/ros-archive-keyring.gpg
           echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
           sudo apt update
+          # Install ROS dependencies
           rosdep update
-          sudo rosdep install --from-paths /tmp/colcon_ws/src --ignore-src -r -y
+          source /opt/ros/${{ matrix.ros2_distro }}/setup.bash
+          sudo rosdep install --from-paths /tmp/colcon_ws/src --ignore-src --rosdistro ${{ matrix.ros2_distro }} -r -y
+          # Install librealsense
+          sudo apt-key adv --keyserver keys.gnupg.net --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE \
+            || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE
+          sudo add-apt-repository "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main" -u
+          sudo apt update
+          sudo apt install -y librealsense2-dev
       - name: Build package
         working-directory: /tmp/colcon_ws
         run: |
