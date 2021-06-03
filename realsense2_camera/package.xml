@@ -6,7 +6,7 @@
   <description>RealSense Camera package allowing access to Intel SR300, D400 and L500 3D cameras</description>
   <maintainer email="doron.hirshberg@intel.com">Doron Hirshberg</maintainer>
   <license>Apache 2.0</license>
-  
+
   <url type="website">http://www.ros.org/wiki/RealSense</url>
   <url type="bugtracker">https://github.com/intel-ros/realsense/issues</url>
 
@@ -17,7 +17,7 @@
   <depend>builtin_interfaces</depend>
   <depend>cv_bridge</depend>
   <depend>image_transport</depend>
-  <depend>librealsense2</depend>
+  <!-- <depend>librealsense2</depend> -->
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>realsense2_camera_msgs</depend>
