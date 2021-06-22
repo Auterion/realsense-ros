@@ -1,11 +1,11 @@
-camera1:
+camera:
     camera:
       ros__parameters:
         device_type: 'd455'
         serial_no: ''
         usb_port_id: ''
 
-        config_file: "config/camera-depth-filter-settings.json"
+        json_file_path: "camera-depth-filter-settings.json"
 
         depth_fps: 10.0
         depth_width: 848
@@ -31,7 +31,7 @@ camera1:
         pointcloud_texture_stream: RS2_STREAM_COLOR
 
         stereo_module:
-          emitter_enabled: true
+          emitter_enabled: 0
         unite_imu_method: ''
 
         rosbag_filename: ''
