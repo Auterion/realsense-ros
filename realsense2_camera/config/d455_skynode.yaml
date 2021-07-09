@@ -5,7 +5,7 @@ camera:
         serial_no: ''
         usb_port_id: ''
 
-        json_file_path: "camera-depth-filter-settings.json"
+        json_file_path: "/usr/src/app/ros2_apps/extra/realsense_ros/realsense2_camera/share/realsense2_camera/config/camera-depth-filter-settings.json"
 
         depth_fps: 10.0
         depth_width: 848
