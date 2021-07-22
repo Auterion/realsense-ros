@@ -11,8 +11,8 @@ apt update \
     libgl1-mesa-dev \
     libglu1-mesa-dev
 
-## Build and install librealsense2 ##
-git clone https://github.com/IntelRealSense/librealsense.git
+## Build and install Intel RealSense SDK 2.0 v2.45.0 ##
+git clone https://github.com/IntelRealSense/librealsense.git -b v2.45.0
 
 PWD=$(pwd)
 
