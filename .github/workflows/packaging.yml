@@ -58,7 +58,8 @@ jobs:
             --arch ${{ matrix.arch }} \
             --os ubuntu \
             --rosdistro ${{ matrix.ros2_distro }} \
-            --custom-setup-script .github/workflows/packaging/install_dependencies.sh
+            --custom-setup-script .github/workflows/packaging/install_dependencies.sh \
+            --colcon-defaults /ros_ws/src/realsense-ros/.github/workflows/packaging/defaults.yaml
       - name: Create zip
         run: |
           cd /tmp/colcon_ws/install_${{ matrix.arch }}
