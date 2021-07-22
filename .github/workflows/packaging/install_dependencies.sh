@@ -17,7 +17,7 @@ git clone https://github.com/IntelRealSense/librealsense.git -b v2.45.0
 PWD=$(pwd)
 
 cd librealsense
-cmake -Bbuild -H.
+cmake -Bbuild -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=false -H.
 cmake --build build --target install -j`nproc --all`
 ldconfig
 
