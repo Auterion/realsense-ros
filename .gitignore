@@ -6,3 +6,4 @@
 .idea/
 .vs/
 *.json
+!camera-depth-filter-settings.json

@@ -13,10 +13,11 @@
 # limitations under the License.
 
 """Launch realsense2_camera node."""
+import launch_ros.actions
 import os
 import yaml
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-import launch_ros.actions
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 
@@ -82,7 +83,8 @@ def yaml_to_dict(path_to_yaml):
         return yaml.load(f, Loader=yaml.SafeLoader)
 
 def launch_setup(context, *args, **kwargs):
-    _config_file = LaunchConfiguration("config_file").perform(context)
+    _config_dir = os.path.join(get_package_share_directory('realsense2_camera'), 'config')
+    _config_file = _config_dir + "/" + LaunchConfiguration("config_file").perform(context)
     params_from_file = {} if _config_file == "''" else yaml_to_dict(_config_file)
     log_level = 'info'
     # Realsense

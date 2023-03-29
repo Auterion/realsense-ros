@@ -264,6 +264,7 @@ install(
 # Install launch files
 install(DIRECTORY 
     launch
+    config
     DESTINATION share/${PROJECT_NAME}
     )
 
