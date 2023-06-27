@@ -5,8 +5,6 @@ matrix:
           env: _ros_dist=dashing
         - dist: focal
           env: _ros_dist=foxy
-        - dist: focal
-          env: _ros_dist=galactic
 
 env:
   # - git clone -v --progress https://github.com/doronhi/realsense.git  # This is Done automatically by TravisCI
