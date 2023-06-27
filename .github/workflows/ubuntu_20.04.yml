@@ -19,7 +19,7 @@ jobs:
     container: px4io/px4-dev-ros2-${{ matrix.ros2_distro }}:2021-05-31
     strategy:
       matrix:
-        ros2_distro: [foxy, galactic]
+        ros2_distro: [foxy]
     steps:
       - uses: actions/checkout@v1
       - name: disable the keychain credential helper
